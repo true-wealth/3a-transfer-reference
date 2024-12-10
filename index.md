@@ -38,12 +38,13 @@ Points considered:
 
 Information we will transfer in transfer Credit Transfer Transaction Information cell as one single line:
 
-`first name;last name10099727153503203566607000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000061`
+`first name;last nameA1009972715350320356660700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000061`
 
 | **Value**  | **Explanation**                                                                                                                                    |
 |------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
 | first name | if client has more than one first name, they are separated by a space                                                                              |
 | last name  | if client has more than one last name, they are separated by a space                                                                               |
+| A          | version used for encoding the transfer reference (currently only version A is available)                                                           |
 | 100997     | client date of birth (ddmmyy)                                                                                                                      |
 | 27         | reference year - indicates current year when the transfer has been initiated                                                                       |
 | 15350      | total contributions in CHF of the current year (2027 in this example)                                                                              |
@@ -55,43 +56,35 @@ Information we will transfer in transfer Credit Transfer Transaction Information
 
 Code would look like this in 2027:
 
-`Mike Mi;Mustermann Mi01019027153503203566607320356660600000000000000000000000000000000000000000000000000000000000000000000000000000000000098`
+`Mike Mi;Mustermann MiA0101902715350320356660732035666060000000000000000000000000000000000000000000000000000000000000000000000000000000000098`
 
 27 - current year; contributions 2027; contributions 2026; purchase 2026; purchase year; contributions 2025; purchase 2025; purchase year; placeholders; checksum
 
 Code without name (starting with date of birth) can look like this in 2037 reach back to 2026 (116 characters):
 
-`01010137153503203566607320356660632035666053203566604320356660332035666023203566601320356660032035666093203566608379`
+`A0101013715350320356660732035666063203566605320356660432035666033203566602320356660132035666003203566609320356660879`
 
 [<img src="./assets/img/3a-transfer-reference.png" alt="3a Transfer Reference Visualization">](./assets/img/3a-transfer-reference.png)
 
 ## Checksum
 
-The checksum of the numbers (sum of all digits in the data) is calculated and then taken modulo 1000 to ensure that the checksum is a maximum of 3 characters long.
+In order to ensure that the data has been transferred correctly, a checksum is added to the code. [Mod 97](https://en.wikipedia.org/wiki/International_Bank_Account_Number#Modulo_operation_on_IBAN) (same as for IBAN) is used to calculate the checksum.
 
-The name part is not included in the checksum, checksum starts with date of birth.
+The name part is not included in the checksum, checksum starts with version code.
 
 the following components are included in the checksum:
 
+*   version
 *   date of birth
 *   reference year
 *   all regular contributions
 *   all purchases
 *   all year numbers
-
-Example:  
-Data: `Firstname;lastname10099727153503203566607220351560600...00`
-
-Cross sum: 1+0+0+9+9+7+2+7+1+5+3+5+0+3+2+0+3+5+6+6+6+0+7+2+2+0+3+5+1+5+6+0+6+0+0+0+0+0+...+0+0 = 117
-
-Checksum: 117 % 1000 = 117
+*   checksum
 
 ## Structure
 
-The code does not contain any semi-colons or other separators. The number of characters for a year or a contribution amount is always fixed with 0 padding on left side (see example below ‘Example same number of characters in code’), the code always has the same length, namely exactly 116 characters. These 116 characters are made up as follows:
-
-*   110 characters for whole contributions / purchase history
-*   6 characters for date of birth
+The code does not contain any semi-colons or other separators. The number of characters for a year or a contribution amount is always fixed with 0 padding on left side (see example below ‘Example same number of characters in code’), the code always has the same length, namely exactly 116 characters.
 
 This means that up to 24 characters are available for the name area. One character must be subtracted for a semi-colon that is used to separate the first and last name.
 
@@ -103,14 +96,16 @@ Only first and last name may contain spaces. Any other spaces / newlines added f
 
 Up to 23 characters are available for the first and last name. If the combination of first and last name is shorter than 23 characters, no placeholders should be added. If the combination of first and last name is longer than 23 characters, then the first name is truncated to 9 characters. The last name is truncated to 14 characters.
 
-For example, if a customers first name is “Mike” and the last name is “Mills” the code will look like this: `Mike;Mills01019027153503203566607320356660600000000000000000000000000000000000000000000000000000000000000000000000000000000000098`
+For example, if a customers first name is “Mike” and the last name is “Mills” the code will look like this: `Mike;MillsA0101902715350320356660732035666060000000000000000000000000000000000000000000000000000000000000000000000000000000000098`
 
 ### Summary
 
 | **Number of characters**                              | **Value**                                                  |
 |-------------------------------------------------------|------------------------------------------------------------|
-| 110                                                   | Contributions / purchase history                           |
+| 1                                                     | Version (currently only version A is available)            |
+| 107                                                   | Contributions / purchase history                           |
 | 6                                                     | Date of birth                                              |
+| 2                                                     | Checksum                                                   |
 | min. 14 if available, dynamic, first + last = max. 23 | Last name                                                  |
 | 1                                                     | Separate last - and first name with `;`                    |
 | min. 9 if available, dynamic, first + last = max. 23  | First Name                                                 |
@@ -121,8 +116,9 @@ For example, if a customers first name is “Mike” and the last name is “Mil
 ### What if a client has no contribution or purchase made in a year?
 
 *   Each number always contains exactly the same number of digits. If, for example, no purchase is made in a year, this is entered as `0000`. This ensures that the code always has the same length and can be read by the system.
-*   Example: Mike Mustermann made no purchases for 2026 and paid no regular contributions in 2027. The code then looks like this: `Mike Mint;Mustermann Mi2700120320350000000...0098`
+*   Example: Mike Mustermann made no purchases for 2026 and paid no regular contributions in 2027. The code then looks like this: `Mike Mint;Mustermann MiA2700120320350000000...0098`
     *   `Mike Mint;Mustermann Mi` → Name
+    *   `A` → version
     *   `27` → reference year
     *   `00120` → CHF 120 regular contributions in 2027
     *   `32035` → regular contributions in 2026
@@ -149,7 +145,7 @@ As gaps in the 3a can only occur from 2025, placeholders for the years before 20
 
 Example how the code in 2027 will look like:
 
-`Mike Mi;Mustermann Mi01019027153503203566607320356660600000000000000000000000000000000000000000000000000000000000000000000000000000000000098`
+`Mike Mi;Mustermann MiA0101902715350320356660732035666060000000000000000000000000000000000000000000000000000000000000000000000000000000000098`
 
 ### What if a customer's first name and last name are longer than they should be?
 
@@ -162,7 +158,7 @@ Example how the code in 2027 will look like:
     *   a clients first name is “Mike” → 4 characters
     *   a clients last name is “Miller Mustermann Zimmermann” → 28 characters
 *   in this case, the leftover character created by the short first name ‘mike’ can be used by the last name
-*   the total characters for first and last name is more than 23 so the last name will be shortened*   The code will look like: `Mike;Miller Mustermann Z010199....`
+*   the total characters for first and last name is more than 23 so the last name will be shortened*   The code will look like: `Mike;Miller Mustermann ZA010199....`
     *   Mike → total name is displayed
     *   Miller Mustermann Zimmermann → is shortened to “Miller Mustermann Z”
 *   the same rule applies, if the last name is shorter than 14 characters, the leftover characters can be use for the first name
@@ -198,11 +194,12 @@ Code separated by semi-colon for better readability: …27;15350;32035;6660;7220
     *   Decimal figures >=5 are rounded up
     *   Decimal figures <=4 are rounded down
     *   Example of a use case: Customer pays CHF 1150.55 into pillar 3a. This amount is shown in the code as 1151
-    *   Applying this rule corresponds to the practice in the tax procedure. See [tax statement](https://www.estv.admin.ch/dam/estv/de/dokumente/dbst/formulare/dbst-form-2011-21edp-de.pdf.download.pdf/dbst-form-2011-21edp-de.pdf "https://www.estv.admin.ch/dam/estv/de/dokumente/dbst/formulare/dbst-form-2011-21edp-de.pdf.download.pdf/dbst-form-2011-21edp-de.pdf") or [ZH tax declaration](https://www.zh.ch/content/dam/zhweb/bilder-dokumente/themen/steuern-finanzen/steuern/natuerlichepersonen/2022/est-wegleitungen/305_wegleitung_zh_2022_ha_bf_def.pdf "https://www.zh.ch/content/dam/zhweb/bilder-dokumente/themen/steuern-finanzen/steuern/natuerlichepersonen/2022/est-wegleitungen/305_wegleitung_zh_2022_ha_bf_def.pdf").    
+    *   Applying this rule corresponds to the practice in the tax procedure. See [tax statement](https://www.estv.admin.ch/dam/estv/de/dokumente/dbst/formulare/dbst-form-2011-21edp-de.pdf.download.pdf/dbst-form-2011-21edp-de.pdf "https://www.estv.admin.ch/dam/estv/de/dokumente/dbst/formulare/dbst-form-2011-21edp-de.pdf.download.pdf/dbst-form-2011-21edp-de.pdf") or [ZH tax declaration](https://www.zh.ch/content/dam/zhweb/bilder-dokumente/themen/steuern-finanzen/steuern/natuerlichepersonen/2022/est-wegleitungen/305_wegleitung_zh_2022_ha_bf_def.pdf).    
 
 ## External references
 
-*   SIX Swiss Payment Standards: [https://www.six-group.com/dam/download/banking-services/standardization/sps/ig-credit-transfer-v2.0.2-de.pdf](https://www.six-group.com/dam/download/banking-services/standardization/sps/ig-credit-transfer-v2.0.2-de.pdf "https://www.six-group.com/dam/download/banking-services/standardization/sps/ig-credit-transfer-v2.0.2-de.pdf")
-*   Form.21EDP dfi/A4: [https://www.estv.admin.ch/dam/estv/de/dokumente/dbst/formulare/dbst-form-2011-21edp-de.pdf.download.pdf/dbst-form-2011-21edp-de.pdf](https://www.estv.admin.ch/dam/estv/de/dokumente/dbst/formulare/dbst-form-2011-21edp-de.pdf.download.pdf/dbst-form-2011-21edp-de.pdf "https://www.estv.admin.ch/dam/estv/de/dokumente/dbst/formulare/dbst-form-2011-21edp-de.pdf.download.pdf/dbst-form-2011-21edp-de.pdf")
-*   BFS Vor- und Nachnamen in der Schweiz: [https://www.bfs.admin.ch/bfs/de/home/statistiken/bevoelkerung/geburten-todesfaelle/namen-schweiz.html](https://www.bfs.admin.ch/bfs/de/home/statistiken/bevoelkerung/geburten-todesfaelle/namen-schweiz.html "https://www.bfs.admin.ch/bfs/de/home/statistiken/bevoelkerung/geburten-todesfaelle/namen-schweiz.html")
-*   ZH Wegleitung zur Steuererklärung: [https://www.zh.ch/content/dam/zhweb/bilder-dokumente/themen/steuern-finanzen/steuern/natuerlichepersonen/2022/est-wegleitungen/305\_wegleitung\_zh\_2022\_ha\_bf\_def.pdf](https://www.zh.ch/content/dam/zhweb/bilder-dokumente/themen/steuern-finanzen/steuern/natuerlichepersonen/2022/est-wegleitungen/305_wegleitung_zh_2022_ha_bf_def.pdf "https://www.zh.ch/content/dam/zhweb/bilder-dokumente/themen/steuern-finanzen/steuern/natuerlichepersonen/2022/est-wegleitungen/305_wegleitung_zh_2022_ha_bf_def.pdf")
+*   SIX Swiss Payment Standards: [https://www.six-group.com/dam/download/banking-services/standardization/sps/ig-credit-transfer-v2.0.2-de.pdf](https://www.six-group.com/dam/download/banking-services/standardization/sps/ig-credit-transfer-v2.0.2-de.pdf)
+*   Form.21EDP dfi/A4: [https://www.estv.admin.ch/dam/estv/de/dokumente/dbst/formulare/dbst-form-2011-21edp-de.pdf.download.pdf/dbst-form-2011-21edp-de.pdf](https://www.estv.admin.ch/dam/estv/de/dokumente/dbst/formulare/dbst-form-2011-21edp-de.pdf.download.pdf/dbst-form-2011-21edp-de.pdf)
+*   BFS Vor- und Nachnamen in der Schweiz: [https://www.bfs.admin.ch/bfs/de/home/statistiken/bevoelkerung/geburten-todesfaelle/namen-schweiz.html](https://www.bfs.admin.ch/bfs/de/home/statistiken/bevoelkerung/geburten-todesfaelle/namen-schweiz.html)
+*   ZH Wegleitung zur Steuererklärung: [https://www.zh.ch/content/dam/zhweb/bilder-dokumente/themen/steuern-finanzen/steuern/natuerlichepersonen/2022/est-wegleitungen/305\_wegleitung\_zh\_2022\_ha\_bf\_def.pdf](https://www.zh.ch/content/dam/zhweb/bilder-dokumente/themen/steuern-finanzen/steuern/natuerlichepersonen/2022/est-wegleitungen/305_wegleitung_zh_2022_ha_bf_def.pdf)
+*   Mod 97: [https://en.wikipedia.org/wiki/International_Bank_Account_Number#Modulo_operation_on_IBAN](https://en.wikipedia.org/wiki/International_Bank_Account_Number#Modulo_operation_on_IBAN)
