@@ -9,7 +9,7 @@ The amendment to the ordinance stipulates that in the event of a transfer of pen
 *   The contributions made in the previous ten years in accordance with Article 7 paragraph 1.
 *   The contributions made as a purchase in the previous ten years, including an indication of which contribution gaps have been offset as a result.
 
-In order to implement these requirements efficiently and in compliance with the law, we have developed a new process in which all relevant data is transmitted directly in the remittance information which can contain up to 140 characters (according to SIX Swiss Payment Standards). This process makes it possible to transfer the information completely and unambiguously between the foundations without the need for additional communication channels such as letters or emails. The chosen format is designed to summarize all relevant data in a compact structure of no more than 140 characters. It contains the first and last name, date of birth, regular contributions, purchases and the purchase year, supplemented by a checksum to ensure that the data has been transferred correctly. This document explains the implementation of the compact and secure digital transmission of contribution and purchase data with a checksum.
+In order to implement these requirements efficiently and in compliance with the law, we have developed a new process in which all relevant data is transmitted directly in the remittance information which can contain up to 140 characters (according to SIX Swiss Payment Standards). This process makes it possible to transfer the information completely and unambiguously between the foundations without the need for additional communication channels such as letters or emails. The chosen format is designed to summarize all relevant data in a compact structure of no more than 140 characters. It contains the first and last name, version, date of birth, regular contributions, purchases and the purchase year, supplemented by a checksum to ensure that the data has been transferred correctly. This document explains the implementation of the compact and secure digital transmission of contribution and purchase data with a checksum.
 
 Advantage of this solution:
 
@@ -68,7 +68,7 @@ Code without name (starting with date of birth) can look like this in 2037 reach
 
 ## Checksum
 
-In order to ensure that the data has been transferred correctly, a checksum is added to the code. [Mod 97](https://en.wikipedia.org/wiki/International_Bank_Account_Number#Modulo_operation_on_IBAN) (same as for IBAN) is used to calculate the checksum.
+In order to ensure that the data has been transferred correctly, a checksum is included to the code. ‘Mode97’ algorithm is used. Mod97 checksums are also used to check IBANs and offers a high level of security against input errors such as transposed numbers and transposed letters. It takes letters into account by converting them into numbers, is standardised and two digits long. A detailed explanation of the checksum can be found here: [https://en.wikipedia.org/wiki/International_Bank_Account_Number#Modulo_operation_on_IBAN](https://en.wikipedia.org/wiki/International_Bank_Account_Number#Modulo_operation_on_IBAN)
 
 The name part is not included in the checksum, checksum starts with version code.
 
@@ -133,7 +133,7 @@ For example, if a customers first name is “Mike” and the last name is “Mil
 *   Variant 1: A purchase was made into 2029. Then the 0 stands for the year 2030.
     *   Example: `...30350003203555100...` here the last `0` stands for the year 2030    
 *   Variant 2: No purchase was made in 2029. In this case, the `0` is considered a place holder, as no purchase was made in this year, the 0 cannot stand for a year in which the purchase was made.
-    *   Example: `...30350003203555100...` here the last `0` is a place holder    *   Example if a customer made no contributions for a certain period: `Mike;Mills010190371535032035666073203566606000000000000000000000000000000135053540500000000000000000000000000000000000000000000000000098`
+    *   Example: `...30350003203555100...` here the last `0` is a place holder    *   Example if a customer made no contributions for a certain period: `Mike;MillsA010190371535032035666073203566606000000000000000000000000000000135053540500000000000000000000000000000000000000000000000000098`
 
 ### What does the code look like until 2035?
 
@@ -173,9 +173,9 @@ Example how the code in 2027 will look like:
 
 In this section we prove that all necessary information as mentioned in article 3a paragraph 1 letter b is reflected in our code.
 
-Code example transmitted in 2027: `...27153503203566607220351560600...00100`
+Code example transmitted in 2027: `...27153503203566607220351560600...0000`
 
-Code separated by semi-colon for better readability: …27;15350;32035;6660;722035;1560;6;00…00;100
+Code separated by semi-colon for better readability: …27;15350;32035;6660;722035;1560;6;00…00;00
 
 *   Regular contribution payments made to the previous foundation in the past 10 years.
     *   `15350` → regular contributions current year (2027)
