@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3a Contribution Transfer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            white-space: nowrap
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            resize: none;
+        }
+
+        .form-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #print {
+            float: right;
+        }
+
+        @media print {
+            body {
+                font-size: 12px;
+            }
+
+            input, textarea {
+                padding: 0;
+                margin-top: 0;
+                border: 0;
+            }
+
+            #print, #intro {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <button id="print" onclick="window.print()">Print</button>
+    <h1>3a Contribution Transfer Reference</h1>
+    <p id="intro">Reference implementation of <a href="https://true-wealth.github.io/3a-transfer-reference/"
+                                                 target="_blank">https://true-wealth.github.io/3a-transfer-reference</a>.
+        This implementation is client side only and does not send any data to a server.
+    </p>
+    <section>
+        <form>
+            <div class="form-group">
+                <label for="firstName">First Name</label>
+                <input type="text" id="firstName" maxlength="23" required onblur="encodeDataFromFrom()"
+                       autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label for="lastName">Last Name</label>
+                <input type="text" id="lastName" maxlength="23" required onblur="encodeDataFromFrom()"
+                       autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label for="dateOfBirth">Date of Birth (DDMMYY)</label>
+                <input type="number" id="dateOfBirth" maxlength="999999" required
+                       onblur="encodeDataFromFrom()" autocomplete="off">
+            </div>
+
+            <div class="form-group form-row">
+                <label for="referenceYear">Year</label>
+                <input type="number" id="referenceYear" maxlength="4" required onblur="updateYears()"
+                       autocomplete="off">
+                <label for="contributionReferenceYear">Contribution in CHF</label>
+                <input type="number" id="contributionReferenceYear" maxlength="5" required
+                       onblur="encodeDataFromFrom()" value="0" autocomplete="off">
+            </div>
+            <script>
+                for (let i = 1; i <= 10; i++) {
+                    document.write(`
+                    <div class="form-group form-row">
+                        <label for="year${i}">Year</label>
+                        <input type="number" id="year${i}" name="year${i}" max="99" readonly>
+                        <label for="contribution${i}">Contribution in CHF</label>
+                        <input type="number" id="contribution${i}" name="contribution${i}" max="99999" required onblur="encodeDataFromFrom()" value="0" autocomplete="off">
+                        <label for="purchase${i}">Purchase of CHF</label>
+                        <input type="number" id="purchase${i}" name="purchase${i}" max="7258" required onblur="encodeDataFromFrom()" value="0" autocomplete="off">
+                        <label for="purchaseYear${i}">done in Year (last digit)</label>
+                        <input type="number" id="purchaseYear${i}" name="purchaseYear${i}" min="0" max="9" required onblur="encodeDataFromFrom()" value="0" autocomplete="off">
+                    </div>
+                `);
+                }
+            </script>
+            <div class="form-group">
+                <label for="encodedString">Reference Code</label>
+                <textarea id="encodedString" rows="4" maxlength="140" autocomplete="off"></textarea>
+            </div>
+        </form>
+    </section>
+</div>
+
+<script>
+    function calculateMod97Checksum(data) {
+        // Convert letters to numbers: A=10, B=11, ..., Z=35
+        const convertedInput = data.replace(/[A-Z]/gi, char => {
+            return char.toUpperCase().charCodeAt(0) - 55;
+        });
+        // Calculate MOD 97 on the large numeric string
+        let remainder = convertedInput;
+        while (remainder.length > 9) {
+            const chunk = remainder.slice(0, 9);
+            remainder = (parseInt(chunk, 10) % 97) + remainder.slice(9);
+        }
+        const x = parseInt(remainder, 10) % 97;
+        return [98 - x, x];
+    }
+
+    function padLeft(value, length, char = '0') {
+        return value.toString().padStart(length, char);
+    }
+
+    function encodeData(data) {
+        const nameSegment = `${data.firstName.slice(0, 9)};${data.lastName.slice(0, 14)}`;
+        const yearsString = data.years.map(year => padLeft(year.contribution, 5) + padLeft(year.purchase, 4) + padLeft(year.purchaseYear, 1)).join('');
+        const rawData = `A${padLeft(data.dateOfBirth, 6)}${data.referenceYear}${padLeft(data.contributionReferenceYear, 5)}${yearsString}`;
+        const checksum = padLeft(calculateMod97Checksum(rawData + "00")[0], 2);
+        return nameSegment + rawData + checksum;
+    }
+
+    function decodeData(encodedString) {
+        const parts = encodedString.split(/(A\d{115})$/);
+        if (parts.length !== 3) {
+            return {
+                checksumIsValid: false,
+                firstName: '',
+                lastName: '',
+                dateOfBirth: '',
+                referenceYear: '',
+                contributionReferenceYear: 0,
+                years: []
+            };
+        }
+        const nameParts = parts[0].split(";");
+        const numberParts = parts[1];
+        const checksum = calculateMod97Checksum(numberParts);
+        const checksumIsValid = checksum[1] === 1;
+        const firstName = nameParts[0];
+        const lastName = nameParts[1];
+        const dateOfBirth = numberParts.substring(1, 7);
+        const referenceYearString = numberParts.substring(7, 9);
+        const referenceYear = parseInt(referenceYearString, 10);
+        const contributionReferenceYear = parseInt(numberParts.substring(9, 14), 10);
+        const yearGroups = numberParts.substring(14).match(/\d{10}/g);
+        const years = yearGroups.map(value => {
+            return {
+                contribution: parseInt(value.substring(0, 5), 10),
+                purchase: parseInt(value.substring(5, 9), 10),
+                purchaseYear: parseInt(referenceYearString.substring(0, 1) + value.substring(9), 10)
+            };
+        });
+        return {
+            checksumIsValid,
+            firstName,
+            lastName,
+            dateOfBirth,
+            referenceYear,
+            contributionReferenceYear,
+            years
+        };
+    }
+
+    function updateYears() {
+        const referenceYear = document.getElementById('referenceYear').value;
+        for (let i = 1; i <= 10; i++) {
+            const year = parseInt(referenceYear, 10) - i;
+            document.getElementById(`year${i}`).value = year;
+        }
+        encodeDataFromFrom();
+    }
+
+    function encodeDataFromFrom() {
+        const firstName = document.getElementById('firstName').value;
+        const lastName = document.getElementById('lastName').value;
+        const dateOfBirth = document.getElementById('dateOfBirth').value;
+        const referenceYear = document.getElementById('referenceYear').value;
+        const contributionReferenceYear = document.getElementById('contributionReferenceYear').value;
+        const years = []
+        for (let i = 1; i <= 10; i++) {
+            const contribution = document.getElementById(`contribution${i}`).value;
+            const purchase = document.getElementById(`purchase${i}`).value;
+            const purchaseYear = document.getElementById(`purchaseYear${i}`).value;
+            years.push({
+                purchaseYear,
+                contribution,
+                purchase
+            });
+        }
+        const encodedString = encodeData({
+            firstName,
+            lastName,
+            dateOfBirth,
+            referenceYear,
+            contributionReferenceYear,
+            years
+        });
+        document.getElementById('encodedString').value = encodedString;
+    }
+
+    document.getElementById('encodedString').addEventListener('keyup', function () {
+        const encodedString = document.getElementById('encodedString').value;
+        if (encodedString) {
+            const decodedData = decodeData(encodedString.replace(/(\r\n|\n|\r)/gm, "").trim());
+            document.getElementById('encodedString').style.borderColor = decodedData.checksumIsValid ? 'green' : 'red';
+            document.getElementById('firstName').value = decodedData.firstName;
+            document.getElementById('lastName').value = decodedData.lastName;
+            document.getElementById('dateOfBirth').value = decodedData.dateOfBirth;
+            document.getElementById('referenceYear').value = decodedData.referenceYear;
+            document.getElementById('contributionReferenceYear').value = decodedData.contributionReferenceYear;
+            decodedData.years.forEach((value, index) => {
+                document.getElementById(`contribution${index + 1}`).value = value.contribution;
+                document.getElementById(`purchase${index + 1}`).value = value.purchase;
+                document.getElementById(`purchaseYear${index + 1}`).value = value.purchase !== 0 ? value.purchaseYear : 0;
+            });
+            updateYears();
+        }
+    });
+
+    document.getElementById('referenceYear').value = parseInt(new Date().getFullYear().toString().substring(2));
+    updateYears();
+</script>

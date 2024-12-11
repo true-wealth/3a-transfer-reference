@@ -27,7 +27,7 @@ Points considered:
 *   Year in date of birth is only 2 digits
     *   Since 3a is relevant until retirement age, there should be no cases of clients older than 100 years.
 *   Hard to read without a helper software
-    *   An online tool (client only, no data transmission) for encoding and decoding the transfer reference will be provided free of charge.
+    *   An online tool (client only, no data transmission) for encoding and decoding the transfer reference is provided free of charge (see below).
     *   Full specification is available for everybody interested.
 *   Information security
     *   It is a common practice already nowadays that client name, date of birth and in some cases even AHV-Number is included in the payment purpose. Data is only visible to those having access to payment information anyway. No additional communication channel needed.
@@ -195,6 +195,10 @@ Code separated by semi-colon for better readability: …27;15350;32035;6660;7220
     *   Decimal figures <=4 are rounded down
     *   Example of a use case: Customer pays CHF 1150.55 into pillar 3a. This amount is shown in the code as 1151
     *   Applying this rule corresponds to the practice in the tax procedure. See [tax statement](https://www.estv.admin.ch/dam/estv/de/dokumente/dbst/formulare/dbst-form-2011-21edp-de.pdf.download.pdf/dbst-form-2011-21edp-de.pdf "https://www.estv.admin.ch/dam/estv/de/dokumente/dbst/formulare/dbst-form-2011-21edp-de.pdf.download.pdf/dbst-form-2011-21edp-de.pdf") or [ZH tax declaration](https://www.zh.ch/content/dam/zhweb/bilder-dokumente/themen/steuern-finanzen/steuern/natuerlichepersonen/2022/est-wegleitungen/305_wegleitung_zh_2022_ha_bf_def.pdf).    
+
+## Reference implementation
+
+A reference implementation is available: [https://true-wealth.github.io/3a-transfer-reference/assets/calculator.html](https://true-wealth.github.io/3a-transfer-reference/assets/calculator.html). This implementation is a simple web application that allows you to encode and decode the transfer reference. The implementation is open source and can be copied and used freely.
 
 ## External references
 
