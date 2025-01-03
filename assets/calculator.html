@@ -73,28 +73,33 @@
     <section>
         <form>
             <div class="form-group">
+                <label for="encodedString">Reference Code</label>
+                <textarea id="encodedString" rows="4" maxlength="140" autocomplete="off"
+                          onclick="this.select()" oninput="enforceMaxLength()"></textarea>
+            </div>
+            <div class="form-group">
                 <label for="firstName">First Name</label>
-                <input type="text" id="firstName" maxlength="23" required onblur="encodeDataFromFrom()"
-                       autocomplete="off">
+                <input type="text" id="firstName" maxlength="23" required onblur="encodeDataFromForm()"
+                       autocomplete="off" oninput="enforceMaxLength(this)">
             </div>
             <div class="form-group">
                 <label for="lastName">Last Name</label>
-                <input type="text" id="lastName" maxlength="23" required onblur="encodeDataFromFrom()"
-                       autocomplete="off">
+                <input type="text" id="lastName" maxlength="23" required onblur="encodeDataFromForm()"
+                       autocomplete="off" oninput="enforceMaxLength(this)">
             </div>
             <div class="form-group">
                 <label for="dateOfBirth">Date of Birth (DDMMYY)</label>
-                <input type="number" id="dateOfBirth" maxlength="999999" required
-                       onblur="encodeDataFromFrom()" autocomplete="off">
+                <input type="number" id="dateOfBirth" maxlength="6" max="999999" required
+                       autocomplete="off" onblur="encodeDataFromForm()" oninput="enforceMaxLength(this)">
             </div>
 
             <div class="form-group form-row">
                 <label for="referenceYear">Year</label>
-                <input type="number" id="referenceYear" maxlength="4" required onblur="updateYears()"
-                       autocomplete="off">
+                <input type="number" id="referenceYear" maxlength="2" max="99" required onblur="updateYears()"
+                       autocomplete="off" oninput="enforceMaxLength(this)">
                 <label for="contributionReferenceYear">Contribution in CHF</label>
-                <input type="number" id="contributionReferenceYear" maxlength="5" required
-                       onblur="encodeDataFromFrom()" value="0" autocomplete="off">
+                <input type="number" id="contributionReferenceYear" maxlength="5" max="99999" required
+                       onblur="encodeDataFromForm()" value="0" autocomplete="off" oninput="enforceMaxLength(this)">
             </div>
             <script>
                 for (let i = 1; i <= 10; i++) {
@@ -103,24 +108,26 @@
                         <label for="year${i}">Year</label>
                         <input type="number" id="year${i}" name="year${i}" max="99" readonly>
                         <label for="contribution${i}">Contribution in CHF</label>
-                        <input type="number" id="contribution${i}" name="contribution${i}" max="99999" required onblur="encodeDataFromFrom()" value="0" autocomplete="off">
+                        <input type="number" id="contribution${i}" name="contribution${i}" max="99999" maxlength="5" required onblur="encodeDataFromForm()" value="0" autocomplete="off" oninput="enforceMaxLength(this)">
                         <label for="purchase${i}">Purchase of CHF</label>
-                        <input type="number" id="purchase${i}" name="purchase${i}" max="7258" required onblur="encodeDataFromFrom()" value="0" autocomplete="off">
+                        <input type="number" id="purchase${i}" name="purchase${i}" max="7258" maxlength="4" required onblur="encodeDataFromForm()" value="0" autocomplete="off" oninput="enforceMaxLength(this)">
                         <label for="purchaseYear${i}">done in Year (last digit)</label>
-                        <input type="number" id="purchaseYear${i}" name="purchaseYear${i}" min="0" max="9" required onblur="encodeDataFromFrom()" value="0" autocomplete="off">
+                        <input type="number" id="purchaseYear${i}" name="purchaseYear${i}" min="0" max="9" maxlength="1" required onblur="encodeDataFromForm()" value="0" autocomplete="off" oninput="enforceMaxLength(this)">
                     </div>
                 `);
                 }
             </script>
-            <div class="form-group">
-                <label for="encodedString">Reference Code</label>
-                <textarea id="encodedString" rows="4" maxlength="140" autocomplete="off"></textarea>
-            </div>
         </form>
     </section>
 </div>
 
 <script>
+    function enforceMaxLength(e) {
+        if (e !== undefined && e.value.length > e.maxLength) {
+            e.value = e.value.slice(0, e.maxLength);
+        }
+    }
+
     function calculateMod97Checksum(data) {
         // Convert letters to numbers: A=10, B=11, ..., Z=35
         const convertedInput = data.replace(/[A-Z]/gi, char => {
@@ -195,14 +202,22 @@
         for (let i = 1; i <= 10; i++) {
             const year = parseInt(referenceYear, 10) - i;
             document.getElementById(`year${i}`).value = year;
+            const disabled = year < 25;
+            document.getElementById(`year${i}`).disabled = disabled;
+            document.getElementById(`contribution${i}`).disabled = disabled;
+            document.getElementById(`purchase${i}`).disabled = disabled;
+            document.getElementById(`purchaseYear${i}`).disabled = disabled;
         }
-        encodeDataFromFrom();
+        encodeDataFromForm();
     }
 
-    function encodeDataFromFrom() {
+    function encodeDataFromForm() {
         const firstName = document.getElementById('firstName').value;
         const lastName = document.getElementById('lastName').value;
         const dateOfBirth = document.getElementById('dateOfBirth').value;
+        if (dateOfBirth.length !== 6 || firstName.length === 0 || lastName.length === 0) {
+            return;
+        }
         const referenceYear = document.getElementById('referenceYear').value;
         const contributionReferenceYear = document.getElementById('contributionReferenceYear').value;
         const years = []
@@ -232,6 +247,9 @@
         if (encodedString) {
             const decodedData = decodeData(encodedString.replace(/(\r\n|\n|\r)/gm, "").trim());
             document.getElementById('encodedString').style.borderColor = decodedData.checksumIsValid ? 'green' : 'red';
+            if (!decodedData.checksumIsValid) {
+                return;
+            }
             document.getElementById('firstName').value = decodedData.firstName;
             document.getElementById('lastName').value = decodedData.lastName;
             document.getElementById('dateOfBirth').value = decodedData.dateOfBirth;
