@@ -66,6 +66,9 @@ Code without name (starting with date of birth) can look like this in 2037 reach
 
 [<img src="./assets/img/3a-transfer-reference.png" alt="3a Transfer Reference Visualization">](./assets/img/3a-transfer-reference.png)
 
+## Validity
+The code is created per account (and thus not per customer) and only contains the information of the transferred account.
+
 ## Checksum
 
 In order to ensure that the data has been transferred correctly, a checksum is included to the code. ‘Mode97’ algorithm is used. Mod97 checksums are also used to check IBANs and offers a high level of security against input errors such as transposed numbers and transposed letters. It takes letters into account by converting them into numbers, is standardised and two digits long. A detailed explanation of the checksum can be found here: [https://en.wikipedia.org/wiki/International_Bank_Account_Number#Modulo_operation_on_IBAN](https://en.wikipedia.org/wiki/International_Bank_Account_Number#Modulo_operation_on_IBAN)
