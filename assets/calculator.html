@@ -79,12 +79,12 @@
             </div>
             <div class="form-group">
                 <label for="firstName">First Name</label>
-                <input type="text" id="firstName" maxlength="23" required onblur="encodeDataFromForm()"
+                <input type="text" id="firstName" maxlength="20" required onblur="encodeDataFromForm()"
                        autocomplete="off" oninput="enforceMaxLength(this)">
             </div>
             <div class="form-group">
                 <label for="lastName">Last Name</label>
-                <input type="text" id="lastName" maxlength="23" required onblur="encodeDataFromForm()"
+                <input type="text" id="lastName" maxlength="20" required onblur="encodeDataFromForm()"
                        autocomplete="off" oninput="enforceMaxLength(this)">
             </div>
             <div class="form-group">
@@ -148,7 +148,7 @@
     }
 
     function encodeData(data) {
-        const nameSegment = `${data.firstName.slice(0, 9)};${data.lastName.slice(0, 14)}`;
+        const nameSegment = `${data.firstName.slice(0, 6)};${data.lastName.slice(0, 14)}`;
         const yearsString = data.years.map(year => padLeft(year.contribution, 5) + padLeft(year.purchase, 4) + padLeft(year.purchaseYear, 1)).join('');
         const rawData = `A${padLeft(data.dateOfBirth, 6)}${data.referenceYear}${padLeft(data.contributionReferenceYear, 5)}${yearsString}`;
         const checksum = padLeft(calculateMod97Checksum(rawData + "00")[0], 2);

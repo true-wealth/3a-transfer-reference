@@ -56,7 +56,7 @@ Information we will transfer in transfer Credit Transfer Transaction Information
 
 Code would look like this in 2027:
 
-`Mike Mi;Mustermann MiA0101902715350320356660732035666060000000000000000000000000000000000000000000000000000000000000000000000000000000000098`
+`Mike M;Mustermann MilA0101902715350320356660732035666060000000000000000000000000000000000000000000000000000000000000000000000000000000000098`
 
 27 - current year; contributions 2027; contributions 2026; purchase 2026; purchase year; contributions 2025; purchase 2025; purchase year; placeholders; checksum
 
@@ -89,15 +89,15 @@ the following components are included in the checksum:
 
 The code does not contain any semi-colons or other separators. The number of characters for a year or a contribution amount is always fixed with 0 padding on left side (see example below ‘Example same number of characters in code’), the code always has the same length, namely exactly 116 characters.
 
-This means that up to 24 characters are available for the name area. One character must be subtracted for a semi-colon that is used to separate the first and last name.
+This means that up to 21 characters are available for the name area. One character must be subtracted for a semi-colon that is used to separate the first and last name.
 
-This means that up to 23 characters are available for the first and last name in total. The name part does not need to be padded, it can also be less than 23 characters.
+This means that up to 20 characters are available for the first and last name in total. The name part does not need to be padded, it can also be less than 20 characters.
 
 Only first and last name may contain spaces. Any other spaces / newlines added for / in transmission must be stripped before parsing.
 
 ### Length of client name
 
-Up to 23 characters are available for the first and last name. If the combination of first and last name is shorter than 23 characters, no placeholders should be added. If the combination of first and last name is longer than 23 characters, then the first name is truncated to 9 characters. The last name is truncated to 14 characters.
+Up to 20 characters are available for the first and last name. If the combination of first and last name is shorter than 20 characters, no placeholders should be added. If the combination of first and last name is longer than 20 characters, then the first name is truncated to 6 characters. The last name is truncated to 14 characters.
 
 For example, if a customers first name is “Mike” and the last name is “Mills” the code will look like this: `Mike;MillsA0101902715350320356660732035666060000000000000000000000000000000000000000000000000000000000000000000000000000000000098`
 
@@ -109,9 +109,10 @@ For example, if a customers first name is “Mike” and the last name is “Mil
 | 107                                                   | Contributions / purchase history                           |
 | 6                                                     | Date of birth                                              |
 | 2                                                     | Checksum                                                   |
-| min. 14 if available, dynamic, first + last = max. 23 | Last name                                                  |
+| min. 14 if available, dynamic, first + last = max. 20 | Last name                                                  |
 | 1                                                     | Separate last - and first name with `;`                    |
-| min. 9 if available, dynamic, first + last = max. 23  | First Name                                                 |
+| min. 6 if available, dynamic, first + last = max. 20  | First Name                                                 |
+| 3                                                     | Reserved for possible linebreaks added during transfer     |
 | max. 140                                              | Total (if names are shorter, it can also be less than 140) |
 
 ## Edge-cases
@@ -119,8 +120,8 @@ For example, if a customers first name is “Mike” and the last name is “Mil
 ### What if a client has no contribution or purchase made in a year?
 
 *   Each number always contains exactly the same number of digits. If, for example, no purchase is made in a year, this is entered as `0000`. This ensures that the code always has the same length and can be read by the system.
-*   Example: Mike Mustermann made no purchases for 2026 and paid no regular contributions in 2027. The code then looks like this: `Mike Mint;Mustermann MiA2700120320350000000...0098`
-    *   `Mike Mint;Mustermann Mi` → Name
+*   Example: Mike Mint Mustermann Miller made no purchases for 2026 and paid no regular contributions in 2027. The code then looks like this: `Mike M;Mustermann MiA2700120320350000000...0098`
+    *   `Mike M;Mustermann Mil` → Name
     *   `A` → version
     *   `27` → reference year
     *   `00120` → CHF 120 regular contributions in 2027
@@ -136,7 +137,8 @@ For example, if a customers first name is “Mike” and the last name is “Mil
 *   Variant 1: A purchase was made into 2029. Then the 0 stands for the year 2030.
     *   Example: `...30350003203555100...` here the last `0` stands for the year 2030    
 *   Variant 2: No purchase was made in 2029. In this case, the `0` is considered a place holder, as no purchase was made in this year, the 0 cannot stand for a year in which the purchase was made.
-    *   Example: `...30350003203555100...` here the last `0` is a place holder    *   Example if a customer made no contributions for a certain period: `Mike;MillsA010190371535032035666073203566606000000000000000000000000000000135053540500000000000000000000000000000000000000000000000000098`
+    *   Example: `...30350003203555100...` here the last `0` is a place holder
+    *   Example if a customer made no contributions for a certain period: `Mike;MillsA010190371535032035666073203566606000000000000000000000000000000135053540500000000000000000000000000000000000000000000000000098`
 
 ### What does the code look like until 2035?
 
@@ -148,12 +150,16 @@ As gaps in the 3a can only occur from 2025, placeholders for the years before 20
 
 Example how the code in 2027 will look like:
 
-`Mike Mi;Mustermann MiA0101902715350320356660732035666060000000000000000000000000000000000000000000000000000000000000000000000000000000000098`
+`Mike M;Mustermann MilA0101902715350320356660732035666060000000000000000000000000000000000000000000000000000000000000000000000000000000000098`
 
 ### What if a customer's first name and last name are longer than they should be?
 
-*   Example:*   a clients first name is “Mike Robertson Mint Rickson” → 27 characters    *   a clients last name is “Miller Mustermann Zimmermann” → 28 characters
-*   In this case, both names are shortened to the following:*   first name “Mike Robe” → 9 characters    *   last name “Miller Musterm” → 14 characters
+*   Example:
+    *   a clients first name is “Mike Robertson Mint Rickson” → 27 characters
+    *   a clients last name is “Miller Mustermann Zimmermann” → 28 characters
+*   In this case, both names are shortened to the following:
+    *   first name “Mike R” → 6 characters
+    *   last name “Miller Musterm” → 14 characters
 
 ### What if a customers first or last name is shorter than the possible characters?
 
@@ -161,16 +167,16 @@ Example how the code in 2027 will look like:
     *   a clients first name is “Mike” → 4 characters
     *   a clients last name is “Miller Mustermann Zimmermann” → 28 characters
 *   in this case, the leftover character created by the short first name ‘mike’ can be used by the last name
-*   the total characters for first and last name is more than 23 so the last name will be shortened*   The code will look like: `Mike;Miller Mustermann ZA010199....`
+*   the total characters for first and last name is more than 20 so the last name will be shortened
+    *   The code will look like: `Mike;Miller MustermanA010199....`
     *   Mike → total name is displayed
-    *   Miller Mustermann Zimmermann → is shortened to “Miller Mustermann Z”
+    *   Miller Mustermann Zimmermann → is shortened to “Miller Musterman”
 *   the same rule applies, if the last name is shorter than 14 characters, the leftover characters can be use for the first name
 
 ### The E-Banking enforces a split the 140 characters into 4 lines with 35 characters each.
 
 *   Lines can be split with newline (return / enter). The lines ending with a newline may only contain 34 characters instead (return is also counted as one character).
-*   In this case, the first and last name must be reduced by 3 characters in order to not overflow.
-*   If the first name or surname does not reach the maximum number of characters, the remaining characters are used to fill the gap until the maximum length of the first name and surname is reached. If this is not enough, the first name is shortened.
+*   For parsing, any newlines (return / enter) must be removed.
 
 ## Acceptance check of this specification
 
