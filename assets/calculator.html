@@ -183,7 +183,7 @@
             return {
                 contribution: parseInt(value.substring(0, 5), 10),
                 purchase: parseInt(value.substring(5, 9), 10),
-                purchaseYear: parseInt(referenceYearString.substring(0, 1) + value.substring(9), 10)
+                purchaseYear: parseInt(value.substring(9), 10)
             };
         });
         return {
