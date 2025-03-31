@@ -148,7 +148,9 @@
     }
 
     function encodeData(data) {
-        const nameSegment = `${data.firstName.slice(0, 6)};${data.lastName.slice(0, 14)}`;
+        const truncatedLastName = data.lastName.slice(0, Math.min(data.lastName.length, 14));
+        const truncatedFirstName = data.firstName.slice(0, Math.min(data.firstName.length, 20 - truncatedLastName.length));
+        const nameSegment = `${truncatedFirstName};${truncatedLastName}`;
         const yearsString = data.years.map(year => padLeft(year.contribution, 5) + padLeft(year.purchase, 4) + padLeft(year.purchaseYear, 1)).join('');
         const rawData = `A${padLeft(data.dateOfBirth, 6)}${data.referenceYear}${padLeft(data.contributionReferenceYear, 5)}${yearsString}`;
         const checksum = padLeft(calculateMod97Checksum(rawData + "00")[0], 2);
