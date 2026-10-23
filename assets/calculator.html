@@ -157,6 +157,21 @@
         return nameSegment + rawData + checksum;
     }
 
+    // Workaround for non-conforming senders: the spec separates the names with ";", but some
+    // send a space instead. A ";" always wins; otherwise the last space separates the names.
+    function splitName(nameSegment) {
+        const semicolonIndex = nameSegment.indexOf(";");
+        if (semicolonIndex !== -1) {
+            return [nameSegment.slice(0, semicolonIndex).trim(), nameSegment.slice(semicolonIndex + 1).trim()];
+        }
+        const trimmed = nameSegment.trim();
+        const spaceIndex = trimmed.lastIndexOf(" ");
+        if (spaceIndex === -1) {
+            return [trimmed, ""];
+        }
+        return [trimmed.slice(0, spaceIndex).trim(), trimmed.slice(spaceIndex + 1).trim()];
+    }
+
     function decodeData(encodedString) {
         const parts = encodedString.split(/(A\d{115})$/);
         if (parts.length !== 3) {
@@ -170,7 +185,7 @@
                 years: []
             };
         }
-        const nameParts = parts[0].split(";");
+        const nameParts = splitName(parts[0]);
         const numberParts = parts[1];
         const checksum = calculateMod97Checksum(numberParts);
         const checksumIsValid = checksum[1] === 1;
